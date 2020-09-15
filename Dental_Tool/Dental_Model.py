@@ -9,7 +9,48 @@ from keras import backend as K
 from keras.layers import *
 import keras
 
-
+def Simple_CNN_Net(input_shape, classes):
+        model = models.Sequential()
+        
+        model.add(Conv2D(32, (3, 3), activation='relu', input_shape=input_shape))
+        model.add(BatchNormalization())
+        model.add(MaxPooling2D((2, 2)))
+        
+        
+        model.add(Conv2D(64, (3, 3), activation='relu'))
+        model.add(BatchNormalization())
+        model.add(MaxPooling2D((2, 2)))
+        
+        
+#         model.add(Conv2D(128, (3, 3), activation='relu'))
+#         model.add(BatchNormalization())
+#         model.add(MaxPooling2D((2, 2)))
+       
+        
+#         model.add(Conv2D(256, (3, 3), activation='relu'))
+#         model.add(BatchNormalization())
+#         model.add(MaxPooling2D((2, 2)))
+        
+        
+        model.add(Flatten())
+#         model.add(Dense(128, activation='relu'))
+#         model.add(BatchNormalization())
+#         model.add(Dropout(0.5))
+        
+#         model.add(Dense(64, activation='relu'))
+#         model.add(BatchNormalization())
+#         model.add(Dropout(0.5))
+        
+        model.add(Dense(classes, activation='softmax'))
+        model.compile(loss=keras.losses.categorical_crossentropy,
+                      optimizer='rmsprop',
+#                       optimizer=keras.optimizers.Adadelta(),
+                      metrics=['accuracy'])
+        
+        return model
+    
+    
+    
 def CNN_Net(input_shape, classes):
         model = models.Sequential()
         
@@ -70,8 +111,6 @@ def Inception(input_shape, classes):
                       metrics=['accuracy'])        
         return model
     
-
-
 def ResNet(input_shape, classes):
         
         input_tensor = Input(shape=input_shape)
