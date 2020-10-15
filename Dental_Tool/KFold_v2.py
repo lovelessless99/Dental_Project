@@ -59,6 +59,13 @@ def K_Fold_balance_teeth_distribution(dataset, argscale, k_fold_num=5):
                 for stage in range(4):
                         stage_dataframe = dataset[dataset["State"] == stage]
                         tooth_group = stage_dataframe.groupby("tooth_num")
+                        
+#                         import random
+#                         groups = [df for _, df in stage_dataframe.groupby("tooth_num") ]
+#                         random.shuffle(groups)
+#                         stage_dataframe = pd.concat(groups).reset_index(drop=True)
+#                         tooth_group = stage_dataframe.groupby("tooth_num")
+                    
                         for tooth_num, tooth_table in tooth_group:
                                 tooth_table = tooth_table.reset_index(drop=True)
                                 

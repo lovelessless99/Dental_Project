@@ -3,48 +3,33 @@ import pandas as pd
 import json
 import os 
 
-def load_json(data_li, interdental=False):
-            normal_path, normal_flip_path, clahe_path, clahe_flip_path = data_li
-            
-            mapping_clahe_data = json.load(open(clahe_path , "r"))
-            mapping_data = json.load(open(normal_path, "r"))
-            mapping_clahe_data_Flip = json.load(open(clahe_flip_path, "r"))
-            mapping_data_Flip = json.load(open(normal_flip_path, "r"))
-
+def load_json(data_list, interdental=False):
             filter_fun = lambda x : { path: max(list(map(int, state))) for path, state in x.items() if max(list(map(int, state))) >= 0 }
                
             interdental_fun = lambda x : { path: state for path, state in x.items() if state >= 0 }
             
-            filter_normal_data       = filter_fun(mapping_data) if not interdental else interdental_fun(mapping_data)
+            results = collections.OrderedDict()
+            all_filtering_data, all_keys = [], []
             
-            filter_normal_data_Flip  =  filter_fun(mapping_data_Flip) if not interdental else interdental_fun(mapping_data_Flip)
-
-            filter_clahe_data        = filter_fun(mapping_clahe_data) if not interdental else interdental_fun(mapping_clahe_data)
+            for dataset_path in data_list:
+                        mapping_data = json.load(open(dataset_path , "r"))
+                        filter_data  = filter_fun(mapping_data) if not interdental else interdental_fun(mapping_data)
+                        all_filtering_data.append(filter_data)
+                        all_keys.append( list(filter_data.keys()) )
             
-            filter_clahe_data_Flip   = filter_fun(mapping_clahe_data_Flip) if not interdental else interdental_fun(mapping_clahe_data_Flip)
-
-
-            filter_data = collections.OrderedDict()
-
-            key_pair_gen = zip(filter_normal_data.keys(), 
-                               filter_normal_data_Flip.keys(), 
-                               filter_clahe_data.keys(), 
-                               filter_clahe_data_Flip.keys())
-
-            for normal, normal_flip, clahe, clahe_flip in key_pair_gen:
-                    filter_data[normal]      = filter_normal_data[normal]
-                    filter_data[normal_flip] = filter_normal_data_Flip[normal_flip]
-                    filter_data[clahe]       = filter_clahe_data[clahe]
-                    filter_data[clahe_flip]  = filter_clahe_data_Flip[clahe_flip]
-                    
-            return filter_data
+            for keys in zip(*all_keys):
+                    for key,  data in zip(keys, all_filtering_data):
+                            results[key] = data[key]        
+            return results
                         
-def json_2_dataframe_PBL(data):
+def json_2_dataframe_PBL(data, mode=None):
         PBL_Columns = ["Path", "State", "Class"]
         dataframe = pd.DataFrame(columns=PBL_Columns)
         data_dict, counter = collections.OrderedDict(), 0
         
-        multi_root = [1, 2, 3, 14, 15, 16, 17, 18, 19, 30, 31, 32]
+        molar = [1, 2, 3, 14, 15, 16, 17, 18, 19, 30, 31, 32]
+        premolar = [ 4, 5, 12, 13, 20, 21, 29, 30 ]
+        
         less_data  = [1, 16, 17, 32]
         
         for path, state in data.items():
@@ -64,6 +49,9 @@ def json_2_dataframe_PBL(data):
                 
                 item["source"] = source
                 item["tooth_num"] = int(path_split[-2])
+                
+                if (mode == "molar" and (item["tooth_num"] not in molar)   ) or (mode == "premolar" and (item["tooth_num"] not in premolar) ): continue 
+                    
                 item["angle"] = int(path_split[-1].split(".")[0])
                 
                 data_dict[counter] = item
@@ -71,12 +59,14 @@ def json_2_dataframe_PBL(data):
         dataframe = dataframe.from_dict(data_dict, "index")
         return dataframe
 
-def json_2_dataframe_PBL_inderdental(data):
+def json_2_dataframe_PBL_inderdental(data, mode=None):
         PBL_Columns = ["Path", "State", "Class"]
         dataframe = pd.DataFrame(columns=PBL_Columns)
         data_dict, counter = collections.OrderedDict(), 0
         
-        multi_root = [1, 2, 3, 14, 15, 16, 17, 18, 19, 30, 31, 32]
+        molar = [1, 2, 3, 14, 15, 16, 17, 18, 19, 30, 31, 32]
+        premolar = [ 4, 5, 12, 13, 20, 21, 29, 30 ]
+        
         less_data  = [1, 16, 17, 32]
         
         for path, state in data.items():
@@ -96,6 +86,9 @@ def json_2_dataframe_PBL_inderdental(data):
                 
                 item["source"] = source
                 item["tooth_num"] = int(path_split[-3])
+                
+                if (mode == "molar"    and item["tooth_num"] not in molar   ) or (mode == "premolar" and item["tooth_num"] not in premolar): continue 
+                
                 item["angle"] = int(path_split[-2].split(".")[0])
                 
                 data_dict[counter] = item

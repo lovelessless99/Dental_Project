@@ -79,7 +79,49 @@ class DataGenerator(keras.utils.Sequence):
                 self.indexes = np.arange(len(self.list_IDs))
                 if self.shuffle == True:
                         np.random.shuffle(self.indexes)
+        
+        def noisy_image(self, noise_typ, image):
+                if noise_typ == "gauss":
+                          row,col= image.shape
+                          mean = 0
+                          var = 0.1
+                          sigma = var**0.5
+                          gauss = np.random.normal(mean,sigma,(row,col))
+                          gauss = gauss.reshape(row,col)
+                          noisy = image + gauss
+                          return noisy
 
+                elif noise_typ == "s&p":
+                          row,col = image.shape
+                          s_vs_p = 0.5
+                          amount = 0.004
+                          out = np.copy(image)
+                          # Salt mode
+                          num_salt = np.ceil(amount * image.size * s_vs_p)
+                          coords = [np.random.randint(0, i - 1, int(num_salt))
+                                  for i in image.shape]
+                          out[coords] = 1
+
+                          # Pepper mode
+                          num_pepper = np.ceil(amount* image.size * (1. - s_vs_p))
+                          coords = [np.random.randint(0, i - 1, int(num_pepper))
+                                  for i in image.shape]
+                          out[coords] = 0
+                          return out
+
+                elif noise_typ == "poisson":
+                          vals = len(np.unique(image))
+                          vals = 2 ** np.ceil(np.log2(vals))
+                          noisy = np.random.poisson(image * vals) / float(vals)
+                          return noisy
+
+                elif noise_typ == "speckle":
+                          row,col = image.shape
+                          gauss = np.random.randn(row,col)
+                          gauss = gauss.reshape(row,col)        
+                          noisy = image + image * gauss
+                          return noisy
+            
         def __data_generation(self, list_IDs_temp):
             
                 # Initialization
@@ -90,6 +132,11 @@ class DataGenerator(keras.utils.Sequence):
                 for i, ID in enumerate(list_IDs_temp):
                         image = cv2.imread(ID, 0)
                         image = cv2.resize(image, (self.resize_setting[1], self.resize_setting[0]))
+                        
+#                         from random import sample
+#                         random_index = sample(range(0, 32), k=8)
+                
+#                         if i in random_index: image = self.noisy_image("gauss", image)
                         image = np.reshape(image, (*image.shape, 1))
                         X[i,], y[i] =  image, self.labels[ID]
                        
