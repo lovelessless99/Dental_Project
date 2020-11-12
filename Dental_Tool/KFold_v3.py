@@ -79,6 +79,7 @@ def K_Fold_balance_teeth_distribution(dataset, argscale, k_fold_num=5):
                                 if len(tooth_table) % argscale != 0:
                                         print(f"========================== Warning ! not {argscale} times ==================")
                                         print(tooth_table)
+                                        tooth_table.to_csv("Error.csv", index=False)
                                         print(len(tooth_table))
                                         raise ValueError
                                         
@@ -138,7 +139,9 @@ def K_Fold_adjust_class_ratio(dataframe, argscale):
         
         for Stage, Class_num in zip(Stages, Class_nums):
                 stage_dataset = dataframe[dataframe["State"] == Stage].reset_index(drop=True)
-                groups = [ stage_dataset.iloc[ i:i+argscale ,:] for i in range(0, len(stage_dataset), argscale) ]
+#                 groups = [ stage_dataset.iloc[ i:i+argscale ,:] for i in range(0, len(stage_dataset), argscale) ]
+                tooth_group = stage_dataset.groupby("source")
+                groups = [ table for source, table in tooth_group ]
                 random.shuffle(groups)
                 stage_dataset_shuffle = pd.concat(groups).reset_index(drop=True)
                 get_enough_data_flag, count = False, 0
@@ -168,8 +171,9 @@ def K_Fold_adjust_class_ratio(dataframe, argscale):
     
     
 def K_Fold_balance_class_and_tooth(dataframe, argscale, k_fold_num=5):
-
-        for train_bal_tooth, valid_bal_tooth, test_bal_tooth in K_Fold_balance_teeth_distribution(dataframe, argscale, k_fold_num):
+        dataset_teeth_generator = K_Fold_balance_teeth_distribution(dataframe, argscale, k_fold_num)
+        
+        for train_bal_tooth, valid_bal_tooth, test_bal_tooth in dataset_teeth_generator:
                 training_dataset = K_Fold_adjust_class_ratio(train_bal_tooth, argscale=argscale)
                 valid_dataset    = K_Fold_adjust_class_ratio(valid_bal_tooth, argscale=argscale)
                 testing_dataset  = K_Fold_adjust_class_ratio(test_bal_tooth , argscale=argscale)
@@ -177,8 +181,10 @@ def K_Fold_balance_class_and_tooth(dataframe, argscale, k_fold_num=5):
                 
 
 def K_Fold_balance_data_generator(dataframe, argscale, batch_size=32, k_fold_num=5):
-    
-        for train_dataset, valid_dataset, test_dataset in K_Fold_balance_class_and_tooth(dataframe, argscale, k_fold_num=k_fold_num):
+        
+        dataset_generator = K_Fold_balance_class_and_tooth(dataframe, argscale, k_fold_num=k_fold_num)
+        
+        for train_dataset, valid_dataset, test_dataset in dataset_generator:
                 train_dataset   = shuffle(train_dataset).reset_index(drop=True)
                 train_generator = make_generator(train_dataset, batch_size)
 

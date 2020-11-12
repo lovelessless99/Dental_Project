@@ -106,17 +106,17 @@ def Inception(input_shape, classes):
 
         model = Model(inputs=input_tensor, outputs=predictions)
         
-        regularizer = l2(0.00001)
+#         regularizer = l2(0.01)
 
-        for layer in base_model.layers:
-                for attr in ['kernel_regularizer']:
-                        if hasattr(layer, attr):
-                                setattr(layer, attr, regularizer)
+#         for layer in base_model.layers:
+#                 for attr in ['kernel_regularizer']:
+#                         if hasattr(layer, attr):
+#                                 setattr(layer, attr, regularizer)
         
                 
         model.compile(loss=keras.losses.categorical_crossentropy,
 #                       optimizer=Adam(lr=0.00000001),
-                      optimizer=keras.optimizers.Adadelta(lr=0.001),
+                      optimizer=keras.optimizers.Adadelta(),
                       metrics=['accuracy'])        
         return model
     

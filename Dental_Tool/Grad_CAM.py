@@ -4,13 +4,44 @@ import numpy as np
 import keras
 import cv2
 
+def grad_cam_multitask(input_model, image, layer_name,H=224,W=224):
+        
+        cls = np.argmax(input_model.predict(image)[1])
+        
+        def normalize(x):
+            """Utility function to normalize a tensor by its L2 norm"""
+            return (x + 1e-10) / (K.sqrt(K.mean(K.square(x))) + 1e-10)
+        """GradCAM method for visualizing input saliency."""
+        
+        y_c = input_model.output[1][0, cls]
+        conv_output = input_model.get_layer(layer_name).output
+        grads = K.gradients(y_c, conv_output)[0]
+        #grads = normalize(grads)
+        gradient_function = K.function([input_model.input], [conv_output, grads])
 
+        output, grads_val = gradient_function([image])
+        output, grads_val = output[0, :], grads_val[0, :, :, :]
+
+        weights = np.mean(grads_val, axis=(0, 1))
+        cam = np.dot(output, weights)
+        #print (cam)
+
+        cam = np.maximum(cam, 0)
+        #cam = resize(cam, (H, W))
+        cam = zoom(cam,H/cam.shape[0])
+        #cam = np.maximum(cam, 0)
+        cam = cam / cam.max()
+        return cam
+    
+    
 def grad_cam(input_model, image, layer_name,H=224,W=224):
+        
         cls = np.argmax(input_model.predict(image))
         def normalize(x):
             """Utility function to normalize a tensor by its L2 norm"""
             return (x + 1e-10) / (K.sqrt(K.mean(K.square(x))) + 1e-10)
         """GradCAM method for visualizing input saliency."""
+        
         y_c = input_model.output[0, cls]
         conv_output = input_model.get_layer(layer_name).output
         grads = K.gradients(y_c, conv_output)[0]
