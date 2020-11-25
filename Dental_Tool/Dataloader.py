@@ -150,7 +150,7 @@ def json_2_dataframe_PBL_inderdental(data, mode=None):
                 else : item["tooth_type"] = -99
                     
                 item["side"] = source + "_" + path[-5]
-                
+                item["multitask_key"] = item["ID"] + "_" + item["side"]
                 
                 cond_1 = (mode == "molar"    ) and (item["tooth_num"] not in molar    )
                 cond_2 = (mode == "premolar" ) and (item["tooth_num"] not in premolar )
